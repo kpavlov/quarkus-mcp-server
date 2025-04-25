@@ -1,34 +1,41 @@
 package io.quarkiverse.mcp.server.sse.it;
 
-import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Base64;
-import java.util.function.Consumer;
-
-import org.junit.jupiter.api.Test;
-
 import io.quarkiverse.mcp.server.test.McpSseClient;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
+import java.net.URI;
+import java.util.Base64;
+import java.util.function.Consumer;
+
+import static io.restassured.RestAssured.given;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
-public class ServerFeaturesTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class ServerFeaturesTest {
 
     @TestHTTPResource
     URI testUri;
 
     McpSseClient client;
 
+    URI endpoint;
+
+    @BeforeAll
+    void beforeEach() {
+        endpoint = initClient();
+    }
+
     @Test
-    public void testPrompt() throws URISyntaxException {
-        URI endpoint = initClient();
+    void testPrompt() {
 
         JsonObject promptListMessage = newMessage("prompts/list");
 
@@ -57,8 +64,7 @@ public class ServerFeaturesTest {
     }
 
     @Test
-    public void testTool() throws URISyntaxException {
-        URI endpoint = initClient();
+    void testTool() {
 
         JsonObject toolListMessage = newMessage("tools/list");
 
@@ -90,8 +96,7 @@ public class ServerFeaturesTest {
     }
 
     @Test
-    public void testResource() throws URISyntaxException {
-        URI endpoint = initClient();
+    void testResource() {
 
         JsonObject resourceListMessage = newMessage("resources/list");
 
@@ -115,7 +120,7 @@ public class ServerFeaturesTest {
                 "file:///project/alpha");
     }
 
-    protected URI initClient() throws URISyntaxException {
+    protected URI initClient() {
         String testUriStr = testUri.toString();
         if (testUriStr.endsWith("/")) {
             testUriStr = testUriStr.substring(0, testUriStr.length() - 1);
