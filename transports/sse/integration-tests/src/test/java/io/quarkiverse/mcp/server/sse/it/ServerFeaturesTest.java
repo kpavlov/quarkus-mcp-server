@@ -1,22 +1,23 @@
 package io.quarkiverse.mcp.server.sse.it;
 
+import static io.restassured.RestAssured.given;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.net.URI;
+import java.util.Base64;
+import java.util.function.Consumer;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
 import io.quarkiverse.mcp.server.test.McpSseClient;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-
-import java.net.URI;
-import java.util.Base64;
-import java.util.function.Consumer;
-
-import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -31,7 +32,8 @@ class ServerFeaturesTest {
 
     @BeforeAll
     void beforeEach() {
-        endpoint = initClient();
+        client = createMcpSseClient(testUri);
+        endpoint = subscribeClient(testUri);
     }
 
     @Test
@@ -120,16 +122,23 @@ class ServerFeaturesTest {
                 "file:///project/alpha");
     }
 
-    protected URI initClient() {
+    protected static McpSseClient createMcpSseClient(URI testUri) {
         String testUriStr = testUri.toString();
         if (testUriStr.endsWith("/")) {
             testUriStr = testUriStr.substring(0, testUriStr.length() - 1);
         }
-        client = new McpSseClient(URI.create(testUriStr + "/mcp/sse"));
+        return new McpSseClient(URI.create(testUriStr + "/mcp/sse"));
+    }
+
+    protected URI subscribeClient(URI testUri) {
+        String testUriStr = testUri.toString();
+        if (testUriStr.endsWith("/")) {
+            testUriStr = testUriStr.substring(0, testUriStr.length() - 1);
+        }
         client.connect();
         var event = client.waitForFirstEvent();
         String messagesUri = testUriStr + event.data().strip();
-        URI endpoint = URI.create(messagesUri);
+        final var endpoint = URI.create(messagesUri);
 
         JsonObject initMessage = newMessage("initialize")
                 .put("params",
