@@ -33,7 +33,7 @@ class ServerFeaturesTest {
     @BeforeAll
     void beforeEach() {
         client = createMcpSseClient(testUri);
-        endpoint = subscribeClient(testUri);
+        endpoint = initClient(testUri);
     }
 
     @Test
@@ -130,7 +130,7 @@ class ServerFeaturesTest {
         return new McpSseClient(URI.create(testUriStr + "/mcp/sse"));
     }
 
-    protected URI subscribeClient(URI testUri) {
+    protected URI initClient(URI testUri) {
         String testUriStr = testUri.toString();
         if (testUriStr.endsWith("/")) {
             testUriStr = testUriStr.substring(0, testUriStr.length() - 1);
@@ -138,7 +138,7 @@ class ServerFeaturesTest {
         client.connect();
         var event = client.waitForFirstEvent();
         String messagesUri = testUriStr + event.data().strip();
-        final var endpoint = URI.create(messagesUri);
+        final var endpointUri = URI.create(messagesUri);
 
         JsonObject initMessage = newMessage("initialize")
                 .put("params",
@@ -151,7 +151,7 @@ class ServerFeaturesTest {
         given().contentType(ContentType.JSON)
                 .when()
                 .body(initMessage.encode())
-                .post(endpoint)
+                .post(endpointUri)
                 .then()
                 .statusCode(200);
 
@@ -168,11 +168,11 @@ class ServerFeaturesTest {
                 .body(new JsonObject()
                         .put("jsonrpc", "2.0")
                         .put("method", "notifications/initialized").encode())
-                .post(endpoint)
+                .post(endpointUri)
                 .then()
                 .statusCode(200);
 
-        return endpoint;
+        return endpointUri;
     }
 
     protected JsonObject assertResponseMessage(JsonObject message, JsonObject response) {
